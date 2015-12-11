@@ -1,0 +1,24 @@
+{
+  "name": "rails-i18n-autocomplete",
+  "main": "./lib/rails-i18n-autocomplete",
+  "version": "0.0.1",
+  "description": "Autocomplete provider for rails i18n files",
+  "keywords": [
+  ],
+  "repository": "https://github.com/ananevam/rails-i18n-autocomplete",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "dependencies": {
+    "js-yaml": "^3.4.6",
+    "underscore": "~1.6.0"
+  },
+  "providedServices": {
+    "autocomplete.provider": {
+      "versions": {
+        "2.0.0": "getProvider"
+      }
+    }
+  }
+}
