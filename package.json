@@ -4,6 +4,8 @@
   "version": "0.0.1",
   "description": "Autocomplete provider for rails i18n files",
   "keywords": [
+    "rails",
+    "autocomplete"
   ],
   "repository": "https://github.com/ananevam/rails-i18n-autocomplete",
   "license": "MIT",
