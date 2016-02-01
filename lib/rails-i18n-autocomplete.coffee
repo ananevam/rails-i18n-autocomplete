@@ -24,7 +24,9 @@ module.exports = RailsI18nAutocomplete =
 
     for yml_path in @ymls
       contents = fs.readFileSync(yml_path).toString()
-      yml = yaml.safeLoad(contents)
+      yml = yaml.safeLoad(contents, {
+        json: true
+      })
 
       for k, v of yml
         _.extend suggestions, @arrayDot(v)
