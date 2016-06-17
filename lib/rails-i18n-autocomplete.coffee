@@ -2,10 +2,15 @@ child = require 'child_process'
 fs = require 'fs'
 yaml = require('js-yaml');
 _ = require 'underscore'
+ConfigSchema = require('./configuration.coffee')
 
 {CompositeDisposable} = require 'atom'
 
 module.exports = RailsI18nAutocomplete =
+  config: ConfigSchema.config
+  ymls: []
+  package_name: 'rails-i18n-autocomplete'
+
   arrayDot: (ar, prepend = '')->
     result = {}
     for k, v of ar
@@ -16,37 +21,52 @@ module.exports = RailsI18nAutocomplete =
     result
 
   searchLocaleFiles: ->
-    @ymls = _.without(child.spawnSync('find', ['-L', @locales_path, '-name', '*.yml'])
-      .stdout.toString().trim().split("\n"), "")
+    @ymls = []
+    for locales_path in @locales_paths
+      @ymls.push _.without(child.spawnSync('find', ['-L', locales_path, '-name', '*.yml'])
+        .stdout.toString().trim().split("\n"), "")
+    @ymls = _.flatten(@ymls)
 
   loadLocales: ->
     suggestions = []
 
     for yml_path in @ymls
-      contents = fs.readFileSync(yml_path).toString()
-      yml = yaml.safeLoad(contents, {
-        json: true
-      })
+      try
+        contents = fs.readFileSync(yml_path).toString()
+        yml = yaml.safeLoad(contents, {json: true})
 
-      for k, v of yml
-        _.extend suggestions, @arrayDot(v)
+        for k, v of yml
+          _.extend suggestions, @arrayDot(v)
 
     @provider.suggestions = _.pairs suggestions
 
-  activate: (state) ->
-    @provider = require './provider'
-    @project_path = atom.project.getPaths()[0]
-    @locales_path = "#{@project_path}/config/locales"
+  setLocalesPaths: ->
+    @locales_paths = []
+
+    for locales_path in atom.config.get("#{@package_name}.localesPaths")
+      path = "#{@project_path}/#{locales_path}/"
+      @locales_paths.push path if fs.existsSync(path)
+
+  loadPackage: ->
+    @setLocalesPaths()
 
     @searchLocaleFiles()
     @loadLocales()
 
-    fs.stat @locales_path, (err, stat)=>
-      if not err and stat.isDirectory()
-        fs.watch @locales_path, (event, filename)=>
-          if event == 'change' or event == 'rename'
-            @searchLocaleFiles()
-            @loadLocales()
+    for locales_path in @locales_paths
+      fs.stat locales_path, (err, stat)=>
+        if not err and stat.isDirectory()
+          fs.watch locales_path, (event, filename)=>
+            if event == 'change' or event == 'rename'
+              @searchLocaleFiles()
+              @loadLocales()
+
+  activate: (state) ->
+    @provider = require './provider'
+    @project_path = atom.project.getPaths()[0]
+
+    atom.config.observe "#{@package_name}.localesPaths", (value) =>
+      @loadPackage()
 
   deactivate: ->
 
